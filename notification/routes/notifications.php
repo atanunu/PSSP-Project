@@ -18,6 +18,10 @@ Route::post('/otp/verify', [NotificationController::class, 'verifyOtp']);
 // New endpoint for push notifications.
 Route::post('/push/send', [PushNotificationController::class, 'sendPush']);
 
+// New endpoints for sending to multiple recipients:
+Route::post('/multi/sms/send', [MultiRecipientController::class, 'sendSmsMulti']);
+Route::post('/multi/email/send', [MultiRecipientController::class, 'sendEmailMulti']);
+
 // Routes for managing notification logs.
 Route::get('/logs', [NotificationLogController::class, 'index']);
 Route::get('/logs/{id}', [NotificationLogController::class, 'show']);
