@@ -1,8 +1,10 @@
 Below is an example implementation that adds a new controller to handle sending notifications to multiple recipients (separated by commas). In this example, we create a new controller called `MultiRecipientController.php` with two endpoints: one for SMS notifications and one for Email notifications. We also update the routes file so that you can call these endpoints.
 
+Below is an updated version of the multi‐recipient controller that now also supports sending push notifications to multiple recipients. This example assumes that multiple recipients for push notifications are provided as a comma-separated list. The controller splits the list, sends a push notification to each recipient, and returns a consolidated response.
+
 ---
 
-## 1. Create the Controller
+### 1. Updated MultiRecipientController.php
 
 **File:** `app/Http/Controllers/MultiRecipientController.php`
 
@@ -12,7 +14,8 @@ Below is an example implementation that adds a new controller to handle sending 
 // Last updated: 2025-02-06
 //
 // This controller handles sending notifications to multiple recipients.
-// Recipients can be provided as a comma-separated string.
+// Recipients should be provided as a comma-separated string.
+// This controller now supports SMS, Email, and Push notifications.
 
 namespace App\Http\Controllers;
 
@@ -20,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\SmsNotification;
 use App\Notifications\EmailNotification;
+use App\Notifications\PushNotification;
 
 class MultiRecipientController extends Controller
 {
@@ -72,7 +76,7 @@ class MultiRecipientController extends Controller
      * - body: The email body content.
      * - gateway (optional): The Email gateway to use.
      *
-     * Example: atanunu@esebun.com, john@esebun.com, mark@mark.com
+     * Example: atanunu@esebun.com,john@esebun.com,mark@mark.com
      */
     public function sendEmailMulti(Request $request)
     {
@@ -104,14 +108,54 @@ class MultiRecipientController extends Controller
             'details' => $results,
         ]);
     }
+
+    /**
+     * Send Push notifications to multiple recipients.
+     *
+     * Expected Request parameters:
+     * - to: A comma-separated string of device tokens or topics.
+     * - payload: An array containing the push notification data (e.g., title, body, and optional data).
+     * - gateway (optional): The push notification gateway to use.
+     *
+     * Example: "recipient1_token,recipient2_token,recipient3_token"
+     */
+    public function sendPushMulti(Request $request)
+    {
+        $validated = $request->validate([
+            'to'      => 'required|string',
+            'payload' => 'required|array',
+            'gateway' => 'sometimes|string',
+        ]);
+
+        // Split the "to" string by commas and trim spaces.
+        $recipients = array_map('trim', explode(',', $validated['to']));
+
+        $results = [];
+        foreach ($recipients as $recipient) {
+            // Use Laravel Notification system to send Push notifications for each recipient.
+            $result = Notification::route('push', $recipient)
+                ->notify(new PushNotification($validated['payload'], $validated['gateway'] ?? null));
+
+            // Collect results.
+            $results[] = [
+                'recipient' => $recipient,
+                'result'    => $result,
+            ];
+        }
+
+        return response()->json([
+            'status'  => 'Push notifications sent to multiple recipients',
+            'details' => $results,
+        ]);
+    }
 }
 ```
 
 ---
 
-## 2. Update Routes
+### 2. Update Routes
 
-Open the routes file at **routes/api.php** and add the new endpoints for multiple recipients:
+In your **routes/api.php** file, add the new endpoints for multiple recipients:
 
 ```php
 <?php
@@ -139,6 +183,7 @@ Route::post('/push/send', [PushNotificationController::class, 'sendPush']);
 // New endpoints for sending to multiple recipients:
 Route::post('/multi/sms/send', [MultiRecipientController::class, 'sendSmsMulti']);
 Route::post('/multi/email/send', [MultiRecipientController::class, 'sendEmailMulti']);
+Route::post('/multi/push/send', [MultiRecipientController::class, 'sendPushMulti']);
 
 // Example endpoints for custom usage (if any)
 // ...
@@ -146,9 +191,9 @@ Route::post('/multi/email/send', [MultiRecipientController::class, 'sendEmailMul
 
 ---
 
-## 3. Usage Instructions
+### 3. Usage Instructions for Multiple Recipients
 
-### SMS Notifications to Multiple Recipients
+#### SMS Notifications to Multiple Recipients
 
 **Endpoint:** `POST /api/multi/sms/send`
 
@@ -157,11 +202,11 @@ Route::post('/multi/email/send', [MultiRecipientController::class, 'sendEmailMul
 {
   "to": "+2348164898637,+2347080400123,+2349092002000",
   "message": "Hello, this is a multi-recipient SMS test.",
-  "gateway": "twilio"  // Optional: if omitted, the default gateway from .env/config is used.
+  "gateway": "twilio"  // Optional; if omitted, default gateway is used.
 }
 ```
 
-### Email Notifications to Multiple Recipients
+#### Email Notifications to Multiple Recipients
 
 **Endpoint:** `POST /api/multi/email/send`
 
@@ -171,21 +216,38 @@ Route::post('/multi/email/send', [MultiRecipientController::class, 'sendEmailMul
   "to": "atanunu@esebun.com,john@esebun.com,mark@mark.com",
   "subject": "Test Email to Multiple Recipients",
   "body": "Hello, this is a test email for multiple recipients.",
-  "gateway": "smtp"  // Optional: if omitted, the default gateway from .env/config is used.
+  "gateway": "smtp"  // Optional; if omitted, default gateway is used.
 }
 ```
 
-When you send a request to these endpoints, the controller will:
-1. Validate the input.
-2. Split the recipient string by commas.
-3. Loop through each recipient and send the notification individually using Laravel’s Notification system.
-4. Return a JSON response with the status and details for each recipient.
+#### Push Notifications to Multiple Recipients
+
+**Endpoint:** `POST /api/multi/push/send`
+
+**Example Payload:**
+```json
+{
+  "to": "recipient1_token,recipient2_token,recipient3_token",
+  "payload": {
+     "title": "Test Push",
+     "body": "This is a test push notification.",
+     "data": {"key": "value"}
+  },
+  "gateway": "google_fcm"  // Optional; if omitted, default gateway is used.
+}
+```
+
+When you send a request to any of these endpoints, the controller:
+1. Validates the input.
+2. Splits the recipient string by commas.
+3. Loops through each recipient and sends the notification individually using Laravel’s Notification system.
+4. Returns a consolidated JSON response containing details for each recipient.
 
 ---
 
-## 4. Composer Dependencies
+### 4. Composer Dependencies
 
-Ensure you have installed all required dependencies by running:
+Make sure you have installed the following dependencies:
 
 ```bash
 composer require twilio/sdk
@@ -195,16 +257,28 @@ composer require mailgun/mailgun-php
 composer require guzzlehttp/guzzle
 ```
 
-This command installs:
-- **Twilio SDK** for SMS integration.
-- **AWS SDK for PHP** for AWS SNS and SES.
-- **Sendgrid SDK** for Sendgrid Email integration.
-- **Mailgun PHP SDK** for Mailgun Email integration.
-- **Guzzle** for making HTTP API requests.
+---
+
+### 5. Final Steps
+
+1. **Installation:**
+   - Create a Laravel project and copy the files into their corresponding directories.
+   - Update your `.env` file with your API keys and configuration settings.
+   - Run `php artisan migrate` to create the necessary database tables.
+   - Install required composer dependencies as shown above.
+   - Start your server using `php artisan serve`.
+
+2. **Testing:**
+   - Use Postman or cURL to test the endpoints for multiple recipients (SMS, Email, and Push).
+   - Verify that the responses include a status and details for each recipient.
+
+3. **Customization:**
+   - Adjust the default gateway settings and API keys in your `.env` and configuration files as needed.
+   - Extend the notification classes and services if additional functionality is required.
 
 ---
 
-## 5. License
+## License
 
 This project is open-sourced under the [MIT License](LICENSE).
 
@@ -212,11 +286,13 @@ This project is open-sourced under the [MIT License](LICENSE).
 
 ## Conclusion
 
-This project provides a unified multi-gateway notification system for Laravel 11. With the new endpoints, you can send notifications to multiple recipients (SMS and Email) by passing a comma-separated list. The project is fully modular, configurable, and easily extendable.
+This updated Laravel multi-gateway notification system now supports sending notifications to multiple recipients for SMS, Email, and Push. The modular design and clear endpoints make it easy to integrate with multiple providers and customize as needed.
 
 Happy Coding!
 ```
 
 ---
 
-Simply copy the entire content above into a file named `README.md` in your project root. This file provides comprehensive implementation and usage instructions, including the new endpoints for sending to multiple recipients and all required composer dependencies.
+Simply copy the entire content above into your `README.md` file in your project's root directory. This comprehensive README file now includes instructions and endpoints for sending notifications to multiple recipients for SMS, Email, and Push, along with all required composer dependencies and usage details.
+
+Happy coding!
