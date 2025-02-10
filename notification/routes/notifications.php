@@ -21,6 +21,7 @@ Route::post('/push/send', [PushNotificationController::class, 'sendPush']);
 // New endpoints for sending to multiple recipients:
 Route::post('/multi/sms/send', [MultiRecipientController::class, 'sendSmsMulti']);
 Route::post('/multi/email/send', [MultiRecipientController::class, 'sendEmailMulti']);
+Route::post('/multi/push/send', [MultiRecipientController::class, 'sendPushMulti']);
 
 // Routes for managing notification logs.
 Route::get('/logs', [NotificationLogController::class, 'index']);
