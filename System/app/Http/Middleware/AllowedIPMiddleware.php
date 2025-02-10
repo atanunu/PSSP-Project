@@ -12,9 +12,9 @@ class AllowedIPMiddleware
         // Retrieve allowed IPs from configuration
         $allowedIps = config('allowed_ips.ips', []);
 
-        // If there are allowed IPs and the current request IP is not in the list, reject the request.
+        // If allowed IPs are defined and the current IP is not in the list, reject the request.
         if (!empty($allowedIps) && !in_array($request->ip(), $allowedIps)) {
-            // Get the error message template and replace the :ip placeholder with the actual IP.
+            // Get the error message template and replace the :ip placeholder
             $errorTemplate = config('RequestTypeErrorMessages.unauthorized_ip');
             $errorMessage = str_replace(':ip', $request->ip(), $errorTemplate);
 
