@@ -23,7 +23,7 @@ class ValidateRequestMethodMiddleware
 
         // If the request method does not match the expected method, return a JSON error.
         if ($currentMethod !== $allowedMethod) {
-            // Get the error message template and replace placeholders with expected and actual values.
+            // Get the error message template and replace the placeholders
             $errorTemplate = config('RequestTypeErrorMessages.invalid_request_method');
             $errorMessage = str_replace(
                 [':expected', ':actual'],
