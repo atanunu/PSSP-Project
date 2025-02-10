@@ -1,4 +1,4 @@
-Below is a comprehensive, organized `README.md` file for the Laravel 11 Multi-Gateway Notification System project. You can copy this text into a file named `README.md` in your project’s root directory. The file includes all implementation details, usage instructions, folder/file structure, and required composer dependencies.
+Below is the complete updated `README.md` file in Markdown format. This file includes all installation, usage, and configuration instructions along with the complete list of required composer dependencies.
 
 ---
 
@@ -44,24 +44,36 @@ This project is a multi-gateway notification system built with Laravel 11. It pr
   - PushEngage
 
 - **Response Logging:**  
-  - Logs for every notification request are stored in the database.
+  - All notification requests are logged in the database.
 
 - **Standardized API Responses:**  
   - Uses a common response template (configured in `config/NotificationResponse.php`) that includes a status, response code, and message.
 
 ## Requirements
 
-- PHP 8.0+
-- Laravel 11
-- Composer 2+
-- A database (MySQL, PostgreSQL, or SQLite)
+- **PHP:** 8.0 or later  
+- **Laravel:** 11.x  
+- **Composer:** 2.x  
+- **Database:** MySQL, PostgreSQL, or SQLite
 
 ## Composer Dependencies
 
-Install the following packages using Composer:
+This project requires the following composer packages:
+
+- **twilio/sdk** – For Twilio SMS integration.
+- **aws/aws-sdk-php** – Provides AWS SNS and AWS SES functionality.
+- **sendgrid/sendgrid** – For Sendgrid Email integration.
+- **mailgun/mailgun-php** – For Mailgun Email integration.
+- **guzzlehttp/guzzle** – For making HTTP requests.
+
+To install these dependencies, run the following commands in your project root:
 
 ```bash
-composer require guzzlehttp/guzzle twilio/sdk aws/aws-sdk-php
+composer require twilio/sdk
+composer require aws/aws-sdk-php
+composer require sendgrid/sendgrid
+composer require mailgun/mailgun-php
+composer require guzzlehttp/guzzle
 ```
 
 ## Installation
@@ -75,7 +87,7 @@ composer require guzzlehttp/guzzle twilio/sdk aws/aws-sdk-php
 
 2. **File Structure:**
 
-   Copy the project files into your Laravel project according to the structure below:
+   Copy the project files into your Laravel project according to the following structure:
 
    ```
    my-notification-project/
@@ -172,38 +184,38 @@ composer require guzzlehttp/guzzle twilio/sdk aws/aws-sdk-php
        └── api.php
    ```
 
-3. **Update the Environment Variables:**
+3. **Update Environment Variables:**
 
-   Edit the `.env` file with your specific API keys, credentials, and default gateway settings.
+   Edit the `.env` file with your specific API keys, credentials, and default settings.
 
 4. **Run Migrations:**
 
-   Execute the following command:
    ```bash
    php artisan migrate
    ```
 
 5. **Install Composer Dependencies:**
 
-   Run:
    ```bash
-   composer require guzzlehttp/guzzle twilio/sdk aws/aws-sdk-php
+   composer require twilio/sdk
+   composer require aws/aws-sdk-php
+   composer require sendgrid/sendgrid
+   composer require mailgun/mailgun-php
+   composer require guzzlehttp/guzzle
    ```
 
 6. **Start the Laravel Server:**
 
-   Run:
    ```bash
    php artisan serve
    ```
 
 ---
 
-## 2.4 Usage Instructions
+## API Endpoints
 
-### API Endpoints
+### SMS Notifications
 
-#### SMS Notifications
 - **Endpoint:** `POST /api/sms/send`  
 - **Example Payload:**
   ```json
@@ -214,7 +226,8 @@ composer require guzzlehttp/guzzle twilio/sdk aws/aws-sdk-php
   }
   ```
 
-#### Email Notifications
+### Email Notifications
+
 - **Endpoint:** `POST /api/email/send`  
 - **Example Payload:**
   ```json
@@ -226,7 +239,8 @@ composer require guzzlehttp/guzzle twilio/sdk aws/aws-sdk-php
   }
   ```
 
-#### OTP Notifications
+### OTP Notifications
+
 - **Endpoint:** `POST /api/otp/send`  
 - **Example Payload:**
   ```json
@@ -248,45 +262,50 @@ composer require guzzlehttp/guzzle twilio/sdk aws/aws-sdk-php
   }
   ```
 
-#### Push Notifications
+### Push Notifications
+
 - **Endpoint:** `POST /api/push/send`  
 - **Example Payload:**
   ```json
   {
     "to": "your_device_token_or_topic",
     "payload": {
-      "title": "Test Push",
-      "body": "This is a test push notification.",
-      "data": {"key": "value"}
+       "title": "Test Push",
+       "body": "This is a test push notification.",
+       "data": {"key": "value"}
     },
     "gateway": "google_fcm"
   }
   ```
 
-#### Logs & Messages Management
-- **Logs:**  
-  - `GET /api/logs` – List all logs  
-  - `GET /api/logs/{id}` – Get a specific log  
-  - `DELETE /api/logs/{id}` – Delete a specific log  
+### Logs & Messages Management
+
+- **Logs:**
+  - `GET /api/logs` – List all logs
+  - `GET /api/logs/{id}` – Retrieve a specific log
+  - `DELETE /api/logs/{id}` – Delete a specific log
   - `DELETE /api/logs/empty` – Empty the logs table
 
-- **Messages:**  
-  - `GET /api/messages` – List all notification messages  
-  - `GET /api/messages/{id}` – Get a specific message  
-  - `DELETE /api/messages/{id}` – Delete a specific message  
-  - `DELETE /api/messages/empty` – Empty the messages table  
-  - `GET /api/messages/filter?gateway=twilio&type=sms` – Filter messages  
+- **Messages:**
+  - `GET /api/messages` – List all notification messages
+  - `GET /api/messages/{id}` – Retrieve a specific message
+  - `DELETE /api/messages/{id}` – Delete a specific message
+  - `DELETE /api/messages/empty` – Empty the messages table
+  - `GET /api/messages/filter?gateway=twilio&type=sms` – Filter messages
   - `GET /api/messages/retry` – Retry failed messages
 
-#### Custom Endpoints (Example Usage)
+### Custom Endpoints (Example Usage)
+
 - `GET /api/another/sms`
 - `GET /api/another/email`
 - `GET /api/another/otp`
 - `GET /api/another/push`
 
-### API Response Template
+---
 
-All responses are standardized using the templates in `config/NotificationResponse.php`. For example, if required parameters are missing, your controller may return:
+## API Response Template
+
+All responses are standardized using the templates defined in `config/NotificationResponse.php`. For example, if required parameters are missing, you can return:
 
 ```php
 $responseTemplate = config('NotificationResponse.missing_parameters');
@@ -295,41 +314,48 @@ return response()->json($responseTemplate, $responseTemplate['http_code']);
 
 ---
 
-## 2.5 Customization & Testing
+## Customization & Testing
 
 - **Testing:**  
-  Use Postman or cURL to test the endpoints.
-  
+  Use Postman or cURL to send requests to the API endpoints.
 - **Error Handling:**  
   Each service class logs errors using Laravel’s logging system.
-  
 - **Customization:**  
-  Adjust default gateways and credentials in your `.env` file and configuration files (in `config/`) as needed.
+  Adjust default gateways and credentials by editing the `.env` file and the configuration files in `config/`.
 
 ---
 
-## 3. Composer Dependencies
+## Composer Dependencies Recap
 
-Ensure you have the following dependencies installed:
+Ensure you have installed the following dependencies:
+
 ```bash
-composer require guzzlehttp/guzzle twilio/sdk aws/aws-sdk-php
+composer require twilio/sdk
+composer require aws/aws-sdk-php
+composer require sendgrid/sendgrid
+composer require mailgun/mailgun-php
+composer require guzzlehttp/guzzle
 ```
 
+This installs the Twilio SDK, AWS SDK for PHP (which supports AWS SNS and SES), Sendgrid, Mailgun, and Guzzle for HTTP requests.
+
 ---
 
-## 4. License
+## License
 
 This project is open-sourced under the [MIT License](LICENSE).
 
 ---
 
-## 5. Conclusion
+## Conclusion
 
-This Laravel multi-gateway notification system offers a unified API for sending SMS, Email, OTP, and Push notifications using multiple providers. The project is modular and customizable so that you can extend it to suit your needs.
+This Laravel multi-gateway notification system provides a unified API for sending notifications via SMS, Email, OTP, and Push. Its modular design and configurable settings make it easy to integrate with multiple service providers and extend as needed.
 
 Happy Coding!
 ```
 
 ---
 
-Simply copy the above text into a file named `README.md` in the root directory of your Laravel project. This README provides a complete guide for installation, usage, and customization along with the project’s folder and file structure and the required composer dependencies.
+Simply copy the above content into a file named `README.md` in the root directory of your project. This comprehensive README includes all implementation and usage instructions as well as the required composer dependencies.
+
+Happy coding!
